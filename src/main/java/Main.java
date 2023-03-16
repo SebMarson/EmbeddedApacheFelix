@@ -17,20 +17,39 @@ public class Main {
         }
         System.out.println();
 
-        Class lookupImplClazz = app.getTestClass("seb.LookupImpl");
+        // todo - What's the easiest way to find a list of classes in the bundles? UV needs to know what it has loaded, can't hardcode it all the time..
+        // Now we have the bundles all loaded, lets try to initialize one of them and run the test method which should give us some bundle specific output
+        Lookup bundleOneLookupImpl = initializeBundleLookupImpl(app, "org.example.BundleOneApacheFelix", "seb.LookupImpl");
+        System.out.println("Attempting to retrieve from bundle one lookup: " + bundleOneLookupImpl.lookup("key"));
+
+        Lookup bundleTwoLookupImpl = initializeBundleLookupImpl(app, "org.example.BundleTwoApacheFelix", "seb2.LookupImpl");
+        System.out.println("Attempting to retrieve from bundle two lookup: " + bundleTwoLookupImpl.lookup("key"));
+
+        System.out.println("Finished application...");
+
+        app.shutdownApplication();
+    }
+
+    /**
+     * Tries to initialize a known Lookup class implementation from a bundle.
+     *
+     * @param app
+     * @param bundleName
+     * @param className
+     * @return
+     * @throws Exception
+     */
+    public static Lookup initializeBundleLookupImpl(HostApplication app, String bundleName, String className) throws Exception {
+        Class lookupImplClazz = app.getTestClass(bundleName, className);
 
         if (lookupImplClazz != null) {
             System.out.println("Loaded class from bundle: " + lookupImplClazz.getName());
 
             // Attempt to initialize
-            Lookup initializedLookup = (Lookup) lookupImplClazz.getConstructors()[0].newInstance();
-            System.out.println("Attempting to retrieve from initialized lookup: " + initializedLookup.lookup("key"));
+            return (Lookup) lookupImplClazz.getConstructors()[0].newInstance();
         } else {
             System.out.println("LookupImpl class not loaded");
+            throw new Exception("LookupImpl class not loaded");
         }
-
-        System.out.println("Finished application...");
-
-        app.shutdownApplication();
     }
 }
