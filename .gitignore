@@ -1,0 +1,5 @@
+
+# Ignore dirs
+.idea
+libs
+target
