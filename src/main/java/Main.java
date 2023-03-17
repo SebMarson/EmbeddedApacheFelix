@@ -17,7 +17,6 @@ public class Main {
         }
         System.out.println();
 
-        // todo - What's the easiest way to find a list of classes in the bundles? UV needs to know what it has loaded, can't hardcode it all the time..
         // Now we have the bundles all loaded, lets try to initialize one of them and run the test method which should give us some bundle specific output
         Lookup bundleOneLookupImpl = initializeBundleLookupImpl(app, "org.example.BundleOneApacheFelix", "seb.LookupImpl");
         System.out.println("Attempting to retrieve from bundle one lookup: " + bundleOneLookupImpl.lookup("key"));

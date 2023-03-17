@@ -87,22 +87,22 @@ public class HostApplication
             // try to load the latest commons io bundle
             File commonsIo = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\commons-io-2.11.0.jar");
             FileInputStream commonsStream = new FileInputStream(commonsIo);
-            m_activator.installBundle(commonsIo.getAbsolutePath(), commonsStream);
+            m_activator.installBundle(commonsIo.getAbsolutePath(), commonsStream, false);
 
             // try to load a very early commons io bundle
             File commonsOldIo = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\commons-io-1.4.jar");
             FileInputStream commonsOldStream = new FileInputStream(commonsOldIo);
-            m_activator.installBundle(commonsOldIo.getAbsolutePath(), commonsOldStream);
+            m_activator.installBundle(commonsOldIo.getAbsolutePath(), commonsOldStream, false);
 
             // try to load the one bundle
             File bundleOne = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleOneApacheFelix-1.1-SNAPSHOT.jar");
             FileInputStream bundleOneStream = new FileInputStream(bundleOne);
-            m_activator.installBundle(bundleOne.getAbsolutePath(), bundleOneStream);
+            m_activator.installBundle(bundleOne.getAbsolutePath(), bundleOneStream, true);
 
             // try to load the two bundle
             File bundleTwo = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleTwoApacheFelix-1.0-SNAPSHOT.jar");
             FileInputStream bundleTwoStream = new FileInputStream(bundleTwo);
-            m_activator.installBundle(bundleTwo.getAbsolutePath(), bundleTwoStream);
+            m_activator.installBundle(bundleTwo.getAbsolutePath(), bundleTwoStream, true);
 
         }
         catch (Exception ex)
