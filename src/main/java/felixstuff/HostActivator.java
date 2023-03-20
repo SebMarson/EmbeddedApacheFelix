@@ -1,9 +1,6 @@
 package felixstuff;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.*;
 import org.osgi.framework.wiring.BundleWiring;
 
 import java.io.InputStream;
@@ -73,6 +70,22 @@ public class HostActivator implements BundleActivator
             return classNames;
         } else {
             throw new Exception("BundleWiring is null, you may not have resolved the bundle yet");
+        }
+    }
+
+    /**
+     * Used to check if a bundle includes an activator. When you start a bundle with an activator class it will start running
+     * code inside the start method immediately. So you can use this to check what bundles may be actively running tasks
+     *
+     * @param bundle
+     */
+    public boolean checkBundleIncludesActivator(Bundle bundle) {
+        String activatorClassName = bundle.getHeaders().get(Constants.BUNDLE_ACTIVATOR);
+        if (activatorClassName != null) {
+            System.out.println("Bundle " + bundle.getSymbolicName() + " has an activator class: " + activatorClassName);
+            return true;
+        } else {
+            return false;
         }
     }
 
