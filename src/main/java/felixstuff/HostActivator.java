@@ -1,10 +1,13 @@
 package felixstuff;
 
+import org.apache.felix.fileinstall.internal.FileInstall;
 import org.osgi.framework.*;
 import org.osgi.framework.wiring.BundleWiring;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +29,12 @@ public class HostActivator implements BundleActivator
     {
         // Save a reference to the bundle context.
         m_context = context;
+
+        Map configMap = new HashMap();
+        configMap.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
+        configMap.put("felix.fileinstall.noInitialDelay", "true");
+        System.out.println("Registering file install service...");
+        // m_context.registerService(FileInstall.class.getName(), new FileInstall(), configMap);
     }
 
     public void stop(BundleContext context)
@@ -101,7 +110,17 @@ public class HostActivator implements BundleActivator
         System.out.println("Attempting to install: " + location);
         Bundle bundle = m_context.installBundle(location, bytes);
         System.out.println("Successfully installed");
-        bundle.start(Bundle.START_TRANSIENT);
+        if (printClasses) {
+            printClasses(bundle.getSymbolicName());
+        }
+    }
+
+    public void installAndStartBundle(String location, InputStream bytes, boolean printClasses) throws Exception {
+        System.out.println();
+        System.out.println("Attempting to install: " + location);
+        Bundle bundle = m_context.installBundle(location, bytes);
+        System.out.println("Successfully installed");
+        bundle.start();
         System.out.println("Bundle started in transient state");
         if (printClasses) {
             printClasses(bundle.getSymbolicName());

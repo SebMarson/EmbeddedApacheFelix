@@ -1,5 +1,6 @@
 package felixstuff;
 
+import org.apache.felix.fileinstall.internal.FileInstall;
 import org.apache.felix.framework.Felix;
 import org.apache.felix.framework.cache.BundleCache;
 import org.apache.felix.framework.util.FelixConstants;
@@ -7,15 +8,13 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.log.LoggerFactory;
 import org.osgi.util.tracker.ServiceTracker;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Acts as the go-between for main application and the felix framework. If we need anything from Felix we should use this
@@ -24,7 +23,7 @@ import java.util.Map;
 public class HostApplication
 {
     private HostActivator m_activator = null;
-    private Felix m_felix = null;
+    public Felix m_felix = null;
     private Map m_lookupMap = new HashMap();
     private ServiceTracker m_tracker = null;
 
@@ -53,11 +52,7 @@ public class HostApplication
 
         // Add core OSGi packages to be exported from the class path
         // via the system bundle.
-        configMap.put(Constants.FRAMEWORK_SYSTEMPACKAGES,
-                "org.osgi.framework; version=1.3.0," +
-                        "org.osgi.service.packageadmin; version=1.2.0," +
-                        "org.osgi.service.startlevel; version=1.0.0," +
-                        "org.osgi.service.url; version=1.0.0," +
+        configMap.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
                         "felixstuff; version=1.0.0");
 
         // Specifies which class loader to use fo boot delegation, default is boot, but I changed to app because this is embedded so think we want that...
@@ -66,7 +61,16 @@ public class HostApplication
 
         // Specifies the auto-deploy directory from which bundles are automatically deployed at framework startup. So for UV that would be the appdata/plugins dir. Defauly is bundle/
         configMap.put("felix.auto.deploy.dir",
-                "loadBundles/");
+                new File("autoLoadBundles").getAbsolutePath());
+
+        // Specifies the auto-deploy directory from which bundles are automatically deployed at framework startup. So for UV that would be the appdata/plugins dir. Defauly is bundle/
+        configMap.put("felix.auto.deploy.action",
+                "install");
+
+        configMap.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
+        configMap.put("felix.fileinstall.noInitialDelay", "true");
+        configMap.put("felix.log.level", "4");
+        configMap.put("felix.log.file", "S:\\workspace\\EmbeddedApacheFelix\\felix.log");
 
         // Create host activator;
         m_activator = new HostActivator();
@@ -81,28 +85,29 @@ public class HostApplication
             // Now create an instance of the framework with
             // our configuration properties.
             m_felix = new Felix(configMap);
+
             // Now start Felix instance.
             m_felix.start();
 
-            // try to load the latest commons io bundle
-            File commonsIo = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\commons-io-2.11.0.jar");
-            FileInputStream commonsStream = new FileInputStream(commonsIo);
-            m_activator.installBundle(commonsIo.getAbsolutePath(), commonsStream, false);
+            BundleContext  context = m_felix.getBundleContext();
+            Dictionary<String, String> fileConfig = new Hashtable();
 
-            // try to load a very early commons io bundle
-            File commonsOldIo = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\commons-io-1.4.jar");
-            FileInputStream commonsOldStream = new FileInputStream(commonsOldIo);
-            m_activator.installBundle(commonsOldIo.getAbsolutePath(), commonsOldStream, false);
+            fileConfig.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
+            fileConfig.put("felix.fileinstall.noInitialDelay", "true");
+            context.registerService(FileInstall.class.getName(), new FileInstall(), fileConfig);
 
-            // try to load the one bundle
-            File bundleOne = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleOneApacheFelix-1.1-SNAPSHOT.jar");
-            FileInputStream bundleOneStream = new FileInputStream(bundleOne);
-            m_activator.installBundle(bundleOne.getAbsolutePath(), bundleOneStream, true);
+            // MyBundleListener listner = new MyBundleListener(m_felix.getBundleContext());
+            // LoggerFactory factory = m_felix.getBundleContext().getService(m_felix.getBundleContext().getServiceReference(LoggerFactory.class));
+            // ConsoleLogService log = new ConsoleLogService(factory);
+            // ServiceRegistration reg = m_felix.getBundleContext().registerService(ConsoleLogService.class.getName(), log, null);
 
-            // try to load the two bundle
-            File bundleTwo = new File("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleTwoApacheFelix-1.0-SNAPSHOT.jar");
-            FileInputStream bundleTwoStream = new FileInputStream(bundleTwo);
-            m_activator.installBundle(bundleTwo.getAbsolutePath(), bundleTwoStream, true);
+            // Register the Lookup
+            // context.registerService(Lookup.class.getName(), )
+
+            // installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\org.osgi.core-6.0.0.jar");
+            installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\org.apache.felix.fileinstall-3.7.4.jar");
+            // installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleOneApacheFelix-1.1-SNAPSHOT.jar");
+            // installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleTwoApacheFelix-1.0-SNAPSHOT.jar");
 
         }
         catch (Exception ex)
@@ -120,6 +125,32 @@ public class HostApplication
         // Use the system bundle activator to gain external
         // access to the set of installed bundles.
         return m_activator.getBundles();
+    }
+
+    public boolean installAndStartBundle(String bundlePath) {
+        try {
+            // try to load the one bundle
+            File bundleOne = new File(bundlePath);
+            FileInputStream bundleOneStream = new FileInputStream(bundleOne);
+            m_activator.installAndStartBundle(bundleOne.getAbsolutePath(), bundleOneStream, true);
+            return true;
+        } catch (Exception e) {
+            System.out.println("Failed to install " + bundlePath + ", reason: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public boolean installBundle(String bundlePath) {
+        try {
+            // try to load the one bundle
+            File bundleOne = new File(bundlePath);
+            FileInputStream bundleOneStream = new FileInputStream(bundleOne);
+            m_activator.installBundle(bundleOne.getAbsolutePath(), bundleOneStream, true);
+            return true;
+        } catch (Exception e) {
+            System.out.println("Failed to install " + bundlePath + ", reason: " + e.getMessage());
+        }
+        return false;
     }
 
     public boolean execute(String name, String commandline)

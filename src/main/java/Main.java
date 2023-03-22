@@ -13,19 +13,32 @@ public class Main {
         System.out.println();
         System.out.println("Installed bundles: ");
         for (Bundle bundle : bundles) {
-            System.out.println(bundle.getBundleId() + " - " + bundle.getSymbolicName() + " from: " + bundle.getLocation());
+            System.out.println(bundle.getBundleId() + " - " + bundle.getSymbolicName() + " from: " + bundle.getLocation() + " in state " + bundle.getState());
         }
         System.out.println();
 
         // Now we have the bundles all loaded, lets try to initialize one of them and run the test method which should give us some bundle specific output
-        Lookup bundleOneLookupImpl = initializeBundleLookupImpl(app, "org.example.BundleOneApacheFelix", "seb.LookupImpl");
-        System.out.println("Attempting to retrieve from bundle one lookup: " + bundleOneLookupImpl.lookup("key"));
+        try {
+            Lookup bundleOneLookupImpl = initializeBundleLookupImpl(app, "org.example.BundleOneApacheFelix", "seb.LookupImpl");
+            System.out.println("Attempting to retrieve from bundle one lookup: " + bundleOneLookupImpl.lookup("key"));
+        } catch (Exception e) {
+            System.out.println("Failed bundle one");
+        }
 
-        Lookup bundleTwoLookupImpl = initializeBundleLookupImpl(app, "org.example.BundleTwoApacheFelix", "seb2.LookupImpl");
-        System.out.println("Attempting to retrieve from bundle two lookup: " + bundleTwoLookupImpl.lookup("key"));
+        try {
+            Lookup bundleTwoLookupImpl = initializeBundleLookupImpl(app, "org.example.BundleTwoApacheFelix", "seb2.LookupImpl");
+            System.out.println("Attempting to retrieve from bundle two lookup: " + bundleTwoLookupImpl.lookup("key"));
+        } catch (Exception e) {
+            System.out.println("Failed bundle two");
+        }
 
         System.out.println("Finished application...");
 
+        try {
+            app.m_felix.waitForStop(0);
+        } finally {
+            System.exit(0);
+        }
         app.shutdownApplication();
     }
 
