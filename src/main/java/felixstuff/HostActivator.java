@@ -121,7 +121,7 @@ public class HostActivator implements BundleActivator
         Bundle bundle = m_context.installBundle(location, bytes);
         System.out.println("Successfully installed");
         bundle.start();
-        System.out.println("Bundle started in transient state");
+        // System.out.println("Bundle started in transient state");
         if (printClasses) {
             printClasses(bundle.getSymbolicName());
         }

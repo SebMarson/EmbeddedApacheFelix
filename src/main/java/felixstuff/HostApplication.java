@@ -69,6 +69,7 @@ public class HostApplication
 
         configMap.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
         configMap.put("felix.fileinstall.noInitialDelay", "true");
+        configMap.put("felix.fileinstall.bundles.new.start", "false");
         configMap.put("felix.log.level", "4");
         configMap.put("felix.log.file", "S:\\workspace\\EmbeddedApacheFelix\\felix.log");
 
@@ -90,24 +91,18 @@ public class HostApplication
             m_felix.start();
 
             BundleContext  context = m_felix.getBundleContext();
-            Dictionary<String, String> fileConfig = new Hashtable();
 
-            fileConfig.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
-            fileConfig.put("felix.fileinstall.noInitialDelay", "true");
-            context.registerService(FileInstall.class.getName(), new FileInstall(), fileConfig);
+            // Create bundle listener
+            context.addBundleListener(new MyBundleListener(context));
 
-            // MyBundleListener listner = new MyBundleListener(m_felix.getBundleContext());
-            // LoggerFactory factory = m_felix.getBundleContext().getService(m_felix.getBundleContext().getServiceReference(LoggerFactory.class));
-            // ConsoleLogService log = new ConsoleLogService(factory);
-            // ServiceRegistration reg = m_felix.getBundleContext().registerService(ConsoleLogService.class.getName(), log, null);
-
-            // Register the Lookup
-            // context.registerService(Lookup.class.getName(), )
-
-            // installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\org.osgi.core-6.0.0.jar");
+            // Create File Installer
             installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\org.apache.felix.fileinstall-3.7.4.jar");
-            // installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleOneApacheFelix-1.1-SNAPSHOT.jar");
-            // installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\BundleTwoApacheFelix-1.0-SNAPSHOT.jar");
+            Dictionary<String, String> fileConfig = new Hashtable();
+            // fileConfig.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
+            // fileConfig.put("felix.fileinstall.noInitialDelay", "true");
+            // fileConfig.put("felix.fileinstall.bundles.new.start", "false");
+            // fileConfig.put("felix.fileinstall.start.level", "-1");
+            context.registerService(FileInstall.class.getName(), new FileInstall(), fileConfig);
 
         }
         catch (Exception ex)
@@ -132,7 +127,7 @@ public class HostApplication
             // try to load the one bundle
             File bundleOne = new File(bundlePath);
             FileInputStream bundleOneStream = new FileInputStream(bundleOne);
-            m_activator.installAndStartBundle(bundleOne.getAbsolutePath(), bundleOneStream, true);
+            m_activator.installAndStartBundle(bundleOne.getAbsolutePath(), bundleOneStream, false);
             return true;
         } catch (Exception e) {
             System.out.println("Failed to install " + bundlePath + ", reason: " + e.getMessage());
