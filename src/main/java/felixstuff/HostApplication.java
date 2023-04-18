@@ -23,6 +23,7 @@ import java.util.*;
 public class HostApplication
 {
     private HostActivator m_activator = null;
+    public BundleContext context;
     public Felix m_felix = null;
     private Map m_lookupMap = new HashMap();
     private ServiceTracker m_tracker = null;
@@ -53,7 +54,7 @@ public class HostApplication
         // Add core OSGi packages to be exported from the class path
         // via the system bundle.
         configMap.put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA,
-                        "felixstuff; version=1.0.0");
+                        "felixstuff; version=1.0.0, gibberish; version=1.0.0");
 
         // Specifies which class loader to use fo boot delegation, default is boot, but I changed to app because this is embedded so think we want that...
         configMap.put(Constants.FRAMEWORK_BUNDLE_PARENT,
@@ -65,7 +66,7 @@ public class HostApplication
 
         // Specifies the auto-deploy directory from which bundles are automatically deployed at framework startup. So for UV that would be the appdata/plugins dir. Defauly is bundle/
         configMap.put("felix.auto.deploy.action",
-                "install");
+                "deploy");
 
         configMap.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
         configMap.put("felix.fileinstall.noInitialDelay", "true");
@@ -90,20 +91,17 @@ public class HostApplication
             // Now start Felix instance.
             m_felix.start();
 
-            BundleContext  context = m_felix.getBundleContext();
+            context = m_felix.getBundleContext();
 
             // Create bundle listener
             context.addBundleListener(new MyBundleListener(context));
 
             // Create File Installer
             installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\org.apache.felix.fileinstall-3.7.4.jar");
-            Dictionary<String, String> fileConfig = new Hashtable();
-            // fileConfig.put("felix.fileinstall.dir", new File("autoLoadBundles").getAbsolutePath());
-            // fileConfig.put("felix.fileinstall.noInitialDelay", "true");
-            // fileConfig.put("felix.fileinstall.bundles.new.start", "false");
-            // fileConfig.put("felix.fileinstall.start.level", "-1");
-            context.registerService(FileInstall.class.getName(), new FileInstall(), fileConfig);
 
+            // Create shared service
+            PluginServiceImpl impl = new PluginServiceImpl();
+            context.registerService(PluginService.class.getName(), impl, null);
         }
         catch (Exception ex)
         {
