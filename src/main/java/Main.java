@@ -1,24 +1,19 @@
 import felixstuff.HostActivator;
 import felixstuff.HostApplication;
 import felixstuff.Lookup;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import java.lang.reflect.Constructor;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
         System.out.println("Starting application...");
         HostApplication app = new HostApplication();
-
-        Bundle[] bundles = app.getInstalledBundles();
-        System.out.println();
-        System.out.println("Installed bundles: ");
-        for (Bundle bundle : bundles) {
-            System.out.println(bundle.getBundleId() + " - " + bundle.getSymbolicName() + " from: " + bundle.getLocation() + " in state " + bundle.getState());
-        }
-        System.out.println();
 
         // Now we have the bundles all loaded, lets try to initialize one of them and run the test method which should give us some bundle specific output
         try {
@@ -38,11 +33,47 @@ public class Main {
         System.out.println("Finished application...");
 
         try {
+            System.out.println("Commands: list, start, stop, exit...");
+            Scanner scan = new Scanner(System.in);
+            String input = "";
+            String cmd = "";
+            while (!"exit".equals(input)) {
+                input = scan.nextLine();
+                if (input.split(" ").length > 1) {
+                    cmd = input.split(" ")[0];
+                } else {
+                    cmd = input;
+                }
+                switch(cmd) {
+                    case "list":
+                        listBundles(app);
+                        break;
+                    case "start":
+                        app.startBundle(Integer.valueOf(input.split(" ")[1]));
+                    default:
+                        break;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error " + e.getMessage());
+        }
+
+        try {
             app.m_felix.waitForStop(0);
         } finally {
             System.exit(0);
         }
         app.shutdownApplication();
+    }
+
+    public static void listBundles(HostApplication app) {
+        Bundle[] bundles = app.getInstalledBundles();
+        System.out.println();
+        System.out.println("Installed bundles: ");
+        for (Bundle bundle : bundles) {
+            System.out.println(bundle.getBundleId() + " - " + bundle.getSymbolicName() + " version: " + bundle.getVersion() + " from: " + bundle.getLocation() + " in state " + bundle.getState());
+        }
+        System.out.println();
     }
 
     /**

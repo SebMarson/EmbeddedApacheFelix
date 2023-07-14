@@ -4,11 +4,18 @@ import org.apache.felix.fileinstall.internal.FileInstall;
 import org.apache.felix.framework.Felix;
 import org.apache.felix.framework.cache.BundleCache;
 import org.apache.felix.framework.util.FelixConstants;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceRegistration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.osgi.framework.*;
+import org.osgi.framework.hooks.resolver.ResolverHook;
+import org.osgi.framework.hooks.resolver.ResolverHookFactory;
+import org.osgi.framework.wiring.BundleCapability;
+import org.osgi.framework.wiring.BundleRevision;
+import org.osgi.framework.wiring.BundleWire;
+import org.osgi.framework.wiring.FrameworkWiring;
 import org.osgi.service.log.LoggerFactory;
+import org.osgi.service.packageadmin.ExportedPackage;
+import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
 import java.io.ByteArrayInputStream;
@@ -96,12 +103,25 @@ public class HostApplication
             // Create bundle listener
             context.addBundleListener(new MyBundleListener(context));
 
+            // Register the resolver hook
+            ResolverHookFactory hookFactory = new ResolverHookFactory() {
+                @Override
+                public ResolverHook begin(Collection<BundleRevision> collection) {
+                    return new CustomResolverHook();
+                }
+            };
+            context.registerService(ResolverHookFactory.class, hookFactory, null);
+
             // Create File Installer
+            System.out.println("Starting installer..");
             installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\org.apache.felix.fileinstall-3.7.4.jar");
+            installAndStartBundle("S:\\workspace\\EmbeddedApacheFelix\\loadBundles\\org.osgi.service.cm-1.6.1.jar");
 
             // Create shared service
+            System.out.println("Creating shared service..");
             PluginServiceImpl impl = new PluginServiceImpl();
             context.registerService(PluginService.class.getName(), impl, null);
+
         }
         catch (Exception ex)
         {
@@ -111,6 +131,14 @@ public class HostApplication
 
         System.out.println("Initialized HostApplication..");
 
+    }
+
+    public void startBundle(int bundleNumber) {
+        try {
+            m_felix.getBundleContext().getBundle(bundleNumber).start();
+        } catch (Exception e) {
+            System.err.println("Could not start: " + e);
+        }
     }
 
     public Bundle[] getInstalledBundles()
